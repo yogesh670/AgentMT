@@ -1,0 +1,85 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+}
+
+android {
+    namespace = "com.inyogeshwar.agentmt"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "com.inyogeshwar.agentmt"
+        minSdk = 26
+        targetSdk = 36
+        versionCode = 15
+        versionName = "0.9.3"
+    }
+
+    // full: everything (GitHub / F-Droid style release, like Termux). play: Google Play policy-safe build
+    // without downloaded Linux binaries, All files access or the battery-exemption request.
+    flavorDimensions += "dist"
+    productFlavors {
+        create("full") { dimension = "dist"; buildConfigField("boolean", "FULL", "true") }
+        create("play") { dimension = "dist"; buildConfigField("boolean", "FULL", "false"); versionNameSuffix = "-play" }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { compose = true; buildConfig = true }
+    packaging {
+        resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        // proot ships as lib*.so so Android extracts it to nativeLibraryDir, the only place an app may exec its own binaries.
+        jniLibs.useLegacyPackaging = true
+        // Our 16 KB-aligned rebuild of Termux's libtermux.so (native/termux-jni) replaces the AAR's 4 KB one.
+        jniLibs.pickFirsts += "**/libtermux.so"
+    }
+    testOptions { unitTests.isReturnDefaultValues = true; unitTests.isIncludeAndroidResources = true
+        unitTests.all { it.systemProperty("agentmt.sqliteDriver", "androidx.sqlite.driver.bundled.BundledSQLiteDriver"); it.systemProperty("robolectric.logging.enabled", "true") } }
+    sourceSets["test"].assets.srcDirs("$projectDir/schemas")
+}
+
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.service)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    implementation(libs.okhttp)
+    implementation("com.github.termux.termux-app:terminal-view:v0.118.1")
+    debugImplementation(libs.androidx.ui.tooling)
+    testImplementation(libs.junit)
+    testImplementation(libs.json)
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    testImplementation("androidx.sqlite:sqlite-bundled-jvm:2.5.2")
+    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation("androidx.test.ext:junit:1.2.1")
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
