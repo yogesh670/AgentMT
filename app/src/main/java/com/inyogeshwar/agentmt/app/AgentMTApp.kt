@@ -295,11 +295,17 @@ private fun Drawer(
     var q by remember { mutableStateOf("") }
     ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow, drawerShape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp)) {
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Logo(30.dp)
-                Spacer(Modifier.width(10.dp))
-                Text("AgentMT", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                androidx.compose.material3.IconButton(onClick = onNew) { Icon(Icons.Outlined.EditNote, "New chat") }
+            Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Logo(32.dp)
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("AgentMT", style = MaterialTheme.typography.titleLarge)
+                        Text("your coding agent, on the go", style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    androidx.compose.material3.IconButton(onClick = onNew) { Icon(Icons.Outlined.EditNote, "New chat") }
+                }
             }
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).clip(RoundedCornerShape(14.dp))

@@ -41,6 +41,8 @@ See DECISIONS.md for why things are the way they are.
 
 ## v0.9.4
 - Removed the Termux-app bridge (commands/MCP run in the built-in Linux or Android shell) and the on-phone APK build kit.
+- Installed tools first: the agent checks the user's Tools list and Linux PATH (installed_tools) before running or installing anything, and install_tool refuses to reinstall an existing tool.
+- UI: richer welcome hero, 2×2 suggestion grid, focused composer ring and primary send button, model pill and drawer header polish.
 
 ## v0.6.0
 - Builds: `./gradlew :app:assembleFullDebug` (GitHub release, everything) and `:app:assemblePlayDebug` / `:app:bundlePlayRelease` (Google Play). See LICENSE_AUDIT.md for why.

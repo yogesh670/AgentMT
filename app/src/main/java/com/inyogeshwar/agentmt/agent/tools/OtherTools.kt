@@ -16,9 +16,9 @@ class ShellTool : Tool {
         "Run a shell command in the project folder. Default environment is \"linux\": ${d.label} ${d.version} as root (${d.shell}). " +
             "Install what you need with `${d.installHint}`" +
             (if (d.pkg == "apt") " (python3 python3-pip nodejs npm git build-essential ffmpeg…); pip needs --break-system-packages" else " (python3 py3-pip nodejs npm git build-base ffmpeg…)") +
-            ". Use environment \"android\" for Android's own sh (toybox). Output is capped."
+            ". Check installed_tools first and use a program that is already installed; install only if it is missing. Use environment \"android\" for Android's own sh (toybox). Output is capped."
     } ?: ("Run a shell command in the project folder using Android's sh (toybox: ls, cat, grep, find, sed, mkdir, cp, mv, rm, wc, sort, diff…). " +
-            "No git, node or python: the user can install Linux from Menu, Linux & tools. Output is capped."))
+            "Check installed_tools first. No git, node or python: the user can install Linux from Menu, Linux & tools. Output is capped."))
     override val schema = schema(p("command", "string", "The command line"),
         p("timeout_seconds", "integer", "Max run time, default 60, max 600"),
         p("environment", "string", "linux (built-in, default) or android"),

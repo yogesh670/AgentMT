@@ -46,7 +46,10 @@ class AppContainer(val context: Context) {
         runCatching { com.inyogeshwar.agentmt.core.linux.AndroidBridge.init(context) }
         com.inyogeshwar.agentmt.agent.tools.BrowserHub.controller = browser
         skills.toolSkillDirs = { toolStore.skillDirs() }
-        engine.extraTools = listOf(com.inyogeshwar.agentmt.agent.tools.InstallTool(toolStore))
+        engine.extraTools = listOf(
+            com.inyogeshwar.agentmt.agent.tools.InstalledToolsTool(toolStore),
+            com.inyogeshwar.agentmt.agent.tools.InstallTool(toolStore),
+        )
         engine.envNote = { toolStore.promptNote() +
             (if (com.inyogeshwar.agentmt.core.linux.LinuxEnv.ready) "\n# Android from Linux\nInside Linux these commands reach the phone: agentmt-open <url|file> (open in an app), agentmt-share <file|text>, agentmt-clipboard-get, agentmt-clipboard-set <text>, agentmt-notify <title>, agentmt-toast <text>, agentmt-install <file.apk> (open Android's installer). Long-running servers: run_command with background=true, then open http://localhost:PORT with the browser tool.\n" else "") }
         appScope.launch { db.plugins().observeAll().collect { refreshPluginDirs() } }

@@ -26,6 +26,12 @@ class InstallTool(private val store: ToolStore) : Tool {
     override suspend fun run(args: JSONObject, ctx: ToolContext): ToolResult = withContext(Dispatchers.IO) {
         val distro = LinuxEnv.distro ?: return@withContext ToolResult("Linux is not installed. Ask the user to install it from Menu → Linux.", true)
         val t = ToolSpecs.parse(args.optString("kind"), args.optString("spec")).getOrElse { return@withContext ToolResult(it.message ?: "Bad spec", true) }
+        val already = store.tools.value.firstOrNull { it.id == t.id }
+        if (already != null && (t.kind != "github" || LinuxEnv.hostPath(t.path).exists())) {
+            return@withContext ToolResult("Already installed: ${t.kind} ${t.name}" +
+                (if (t.kind == "github") " at ${t.path}" else "") +
+                ". Use it directly instead of installing it again. Remove it from Tools first only if you really want to reinstall.")
+        }
         val proc = LinuxEnv.process(File(LinuxEnv.hostPath("/").path), ToolSpecs.installScript(t, distro)).redirectErrorStream(true).start()
         val log = StringBuilder()
         val reader = Thread { runCatching { proc.inputStream.bufferedReader().forEachLine { synchronized(log) { log.append(it).append('\n'); if (log.length > 20_000) log.delete(0, 10_000) } } } }.apply { start() }

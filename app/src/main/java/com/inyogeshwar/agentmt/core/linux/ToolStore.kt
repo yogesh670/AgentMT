@@ -189,7 +189,7 @@ class ToolStore(context: Context) {
     fun promptNote(): String {
         val l = _tools.value
         if (l.isEmpty() || !LinuxEnv.ready) return ""
-        return "\n# Installed tools (inside Linux)\n" + l.joinToString("\n") { t ->
+        return "\n# Installed tools (inside Linux) — use these first; do not install them again\n" + l.joinToString("\n") { t ->
             when (t.kind) {
                 "github" -> "- ${t.name}: GitHub ${t.source}, cloned at ${t.path}${if (t.description.isNotBlank()) " — ${t.description}" else ""}. Read its README before using it."
                 "linux" -> "- ${t.name}: Linux package(s)"

@@ -120,3 +120,7 @@ one-tap kits (Reverse engineering: apktool, radare2, jadx 1.5.6, REA skill; Web 
 - Removed `core/termux/TermuxBridge`, the Linux → Termux card, the `termux:` MCP transport, the `useTermux` setting and the `termux` environment of `run_command`, plus the Termux permission/`<queries>` in the full manifest. AgentMT no longer depends on the user installing the Termux app; commands run in the built-in Linux or Android's shell.
 - Removed `core/linux/ApkBuildKit` and the APK build section/setting text. The agent can still install tools and run Gradle, but AgentMT does not ship a preconfigured Android SDK/JDK build kit on the phone.
 - The bundled terminal UI still uses the Apache-2.0 termux terminal-view/emulator libraries; that is a library dependency, not the Termux app.
+
+## v0.9.4 — D-042 Installed tools first
+- Added the read-only `installed_tools` tool: it lists `ToolStore` entries and, for `need=<program>`, checks Linux `command -v` plus the known tool dirs. `SystemPrompt`, `ToolStore.promptNote()` and `run_command` all tell the model to use what is installed before installing anything; `install_tool` returns "already installed" for an existing entry.
+- Kept the welcome copy free of nav labels ("Web" instead of "Browser") so Robolectric text selectors stay unambiguous.

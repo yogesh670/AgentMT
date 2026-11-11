@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +40,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.DriveFileRenameOutline
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Folder
@@ -163,7 +171,9 @@ fun ChatScreen(
             IconButton(onClick = onOpenDrawer) { Icon(Icons.Filled.Menu, "Menu") }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(
-                    Modifier.clip(RoundedCornerShape(12.dp)).clickable { showModels = true }.padding(horizontal = 10.dp, vertical = 4.dp),
+                    Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                        .clickable { showModels = true }.padding(start = 10.dp, end = 6.dp, top = 5.dp, bottom = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (profile != null) { Icon(Icons.Outlined.SwapHoriz, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.secondary); Spacer(Modifier.width(4.dp)) }
@@ -298,15 +308,52 @@ fun ChatScreen(
 
 @Composable
 private fun Welcome(noProvider: Boolean, projectName: String, onProject: () -> Unit, onProviders: () -> Unit, onSuggestion: (String, String) -> Unit) {
-    Column(Modifier.fillMaxSize().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.weight(1f))
-        Logo(60.dp)
-        Spacer(Modifier.height(18.dp))
-        Text("What are we building?", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+    val icons = listOf(
+        Icons.AutoMirrored.Outlined.Article,
+        Icons.Outlined.Code,
+        Icons.Outlined.BugReport,
+        Icons.Outlined.Description,
+    )
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Spacer(Modifier.height(26.dp))
+        Box(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
+                .background(
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                        )
+                    )
+                )
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f), RoundedCornerShape(28.dp))
+                .padding(22.dp),
+        ) {
+            Column {
+                Logo(54.dp)
+                Spacer(Modifier.height(12.dp))
+                Text("AgentMT", style = MaterialTheme.typography.headlineMedium)
+                Spacer(Modifier.height(4.dp))
+                Text("Your coding agent, in your pocket.", style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HeroChip(Icons.Outlined.Terminal, "Linux")
+                    HeroChip(Icons.Outlined.Language, "Web")
+                    HeroChip(Icons.Outlined.Extension, "Tools")
+                }
+            }
+        }
+        Spacer(Modifier.height(20.dp))
+        Text("What are we building?", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(10.dp))
         Row(
             Modifier.clip(RoundedCornerShape(50)).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(50))
-                .clickable(onClick = onProject).padding(horizontal = 14.dp, vertical = 7.dp),
+                .clickable(onClick = onProject).padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Outlined.Folder, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
@@ -315,7 +362,7 @@ private fun Welcome(noProvider: Boolean, projectName: String, onProject: () -> U
             Icon(Icons.Filled.KeyboardArrowDown, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (noProvider) {
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(16.dp))
             Surface(shape = RoundedCornerShape(18.dp), color = MaterialTheme.colorScheme.primaryContainer, onClick = onProviders) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Outlined.Key, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
@@ -328,10 +375,46 @@ private fun Welcome(noProvider: Boolean, projectName: String, onProject: () -> U
                 }
             }
         }
-        Spacer(Modifier.weight(1f))
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            suggestions.forEach { (t, s) -> SuggestionCard(t, s, { onSuggestion(t, s) }) }
+        Spacer(Modifier.height(22.dp))
+        Text("Start with", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(start = 2.dp, bottom = 8.dp))
+        suggestions.withIndex().chunked(2).forEach { pair ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                pair.forEach { entry ->
+                    val (title, subtitle) = entry.value
+                    SuggestionCard2(title, subtitle, icons[entry.index], { onSuggestion(title, subtitle) }, Modifier.weight(1f))
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+            Spacer(Modifier.height(10.dp))
         }
+        Spacer(Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun HeroChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+    Row(
+        Modifier.clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.45f))
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(icon, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(5.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+private fun SuggestionCard2(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier.clip(RoundedCornerShape(18.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow).clickable(onClick = onClick).padding(14.dp),
+    ) {
+        Icon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.height(8.dp))
+        Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -340,10 +423,12 @@ private fun Composer(
     value: String, onChange: (String) -> Unit, running: Boolean, hasAttachments: Boolean, onAttach: () -> Unit,
     onSend: () -> Unit, onStop: () -> Unit, modifier: Modifier = Modifier,
 ) {
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
     Box(modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 10.dp)) {
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(28.dp))
+                .border(if (focused) 1.5.dp else 1.dp, if (focused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(28.dp))
                 .padding(start = 6.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
@@ -357,6 +442,7 @@ private fun Composer(
                 BasicTextField(
                     value, onChange, textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary), maxLines = 8,
+                    interactionSource = interaction,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 24.dp),
                 )
             }
@@ -367,7 +453,7 @@ private fun Composer(
                     .background(
                         when {
                             running -> MaterialTheme.colorScheme.onSurface
-                            canSend -> MaterialTheme.colorScheme.onSurface
+                            canSend -> MaterialTheme.colorScheme.primary
                             else -> MaterialTheme.colorScheme.surfaceContainerHighest
                         }
                     )
@@ -375,7 +461,7 @@ private fun Composer(
                 contentAlignment = Alignment.Center,
             ) {
                 if (running) Icon(Icons.Filled.Stop, "Stop", tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(20.dp))
-                else Icon(Icons.Filled.ArrowUpward, "Send", tint = if (canSend) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                else Icon(Icons.Filled.ArrowUpward, "Send", tint = if (canSend) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             }
         }
     }
