@@ -58,6 +58,8 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true; buildConfig = true }
+    // The UI is English-only; drop the ~70 localized resource configs Material/AndroidX ship.
+    androidResources { localeFilters += listOf("en") }
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
         // proot ships as lib*.so so Android extracts it to nativeLibraryDir, the only place an app may exec its own binaries.
