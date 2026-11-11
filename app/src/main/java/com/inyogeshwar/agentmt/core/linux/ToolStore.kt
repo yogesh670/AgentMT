@@ -144,6 +144,11 @@ ln -sf /opt/jadx/bin/jadx /usr/local/bin/jadx
 echo "jadx 1.5.6 installed"
 """.trim()
 
+    /** Downloads the Chromium build Playwright renders with (used by the motion-graphics skills' render.js). */
+    val PLAYWRIGHT = """
+playwright install chromium || npx -y playwright install chromium || echo "(Chromium download failed; the skill's scripts/setup.sh will retry)"
+""".trim()
+
     val KITS = listOf(
         Kit("Reverse engineering", "REA (rea-agents MCP + skill), apktool, jadx 1.5.6, radare2, Java 17, Node 22",
             listOf(InstalledTool("linux", "apktool radare2 openjdk-17-jdk-headless unzip file binutils curl procps xz-utils", "apt"),
@@ -153,6 +158,10 @@ echo "jadx 1.5.6 installed"
             listOf(InstalledTool("linux", "nodejs npm python3 python3-pip git curl", "apt"))),
         Kit("Media", "ffmpeg + latest yt-dlp from pip (the apt one is too old for YouTube)",
             listOf(InstalledTool("linux", "ffmpeg python3-pip", "apt"), InstalledTool("python", "yt-dlp", "pip"))),
+        Kit("Motion graphics", "ffmpeg, Python and Node 22 + Playwright/Chromium, plus the motion-graphics skills (Barty-Bart/motion-graphics, MIT). Renders animated clips and B-roll.",
+            listOf(InstalledTool("linux", "ffmpeg python3 python3-pip", "apt"),
+                InstalledTool("npm", "playwright", "npm"),
+                InstalledTool("github", "motion-graphics", "https://github.com/Barty-Bart/motion-graphics")), PLAYWRIGHT),
     )
 
     /** The whole kit as one script, so it runs as a single job with one log. */

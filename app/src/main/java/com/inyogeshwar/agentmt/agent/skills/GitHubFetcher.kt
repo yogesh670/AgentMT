@@ -63,12 +63,12 @@ class GitHubFetcher(private val token: () -> String?) {
         }
     }
 
-    /** Downloads every file under [path] (max 80 files, 4 MB total). Keys are paths relative to [path]. */
+    /** Downloads every file under [path] (max 300 files, 12 MB total). Keys are paths relative to [path]. */
     suspend fun downloadTree(r: RepoRef, path: String): Map<String, ByteArray> {
         val out = LinkedHashMap<String, ByteArray>(); var total = 0L
         suspend fun walk(p: String) {
             for (e in list(r, p)) {
-                if (out.size >= 80 || total > 4_000_000) return
+                if (out.size >= 300 || total > 12_000_000) return
                 when (e.type) {
                     "dir" -> walk(e.path)
                     "file" -> e.downloadUrl?.let { u ->

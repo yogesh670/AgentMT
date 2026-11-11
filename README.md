@@ -52,6 +52,11 @@ See DECISIONS.md for why things are the way they are.
 - MCP OAuth: remote MCP servers that use OAuth can be signed in from the server screen (authorization code + PKCE, dynamic client registration, tokens in the encrypted vault).
 - Bundled `reverse-engineer-anything` skill (adapted from rea, MIT): REA MCP tools when available, `npx rea-agents` otherwise, or JADX/apktool inside Linux.
 
+## v0.9.6 — Motion graphics skills + a skills connector
+- New "Motion graphics" kit (Linux screen): ffmpeg + Python 3, Node 22 + Playwright/Chromium, and the motion-graphics skills (Barty-Bart/motion-graphics, MIT) cloned into Linux so their scripts render clips.
+- "Install skills" now features `Barty-Bart/motion-graphics` for one-tap install; paste any `owner/repo` or skills.sh link to add Claude-Code-style skills.
+- Larger skill repos copy fully (GitHub skill download raised to 300 files / 12 MB).
+
 ## v0.6.0
 - Builds: `./gradlew :app:assembleFullDebug` (GitHub release, everything) and `:app:assemblePlayDebug` / `:app:bundlePlayRelease` (Google Play). See LICENSE_AUDIT.md for why.
 - Linux: Back up / Restore / Reset a distro. Android commands inside Linux: agentmt-open, agentmt-share, agentmt-clipboard-get, agentmt-clipboard-set, agentmt-notify, agentmt-toast.

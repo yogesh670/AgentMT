@@ -45,7 +45,7 @@ import com.inyogeshwar.agentmt.data.db.ProjectEntity
 import kotlinx.coroutines.launch
 import java.io.File
 
-private val FEATURED_SKILL_REPOS = listOf("anthropics/skills", "inyogeshwar/microtool-launch-operator-skill")
+private val FEATURED_SKILL_REPOS = listOf("anthropics/skills", "inyogeshwar/microtool-launch-operator-skill", "Barty-Bart/motion-graphics")
 private val FEATURED_PLUGIN_REPOS = listOf("anthropics/claude-plugins-official")
 
 @OptIn(ExperimentalLayoutApi::class)
