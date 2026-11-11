@@ -21,8 +21,8 @@ android {
         applicationId = "com.inyogeshwar.agentmt"
         minSdk = 26
         targetSdk = 36
-        versionCode = 17
-        versionName = "0.9.6"
+        versionCode = 18
+        versionName = "0.9.7"
     }
 
     // full: everything (GitHub / F-Droid style release, like Termux). play: Google Play policy-safe build

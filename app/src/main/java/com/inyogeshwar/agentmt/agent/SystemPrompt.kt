@@ -44,6 +44,7 @@ ${top.ifEmpty { "  (empty folder)" }}
 - When you need a decision or missing detail from the user, call ask_user with short options instead of guessing.
 - Run independent read-only tool calls in parallel when you can.
 - For work with several steps, keep a checklist with update_todos and update it as you go.
+- The user can send more messages while you work. Treat any new user message you see as fresh instructions for the current task: fold it into what you're doing (or adjust your plan) instead of ignoring it.
 - Files the user attaches appear inside <attached_file> tags (text) or as images/PDFs; refer to them by name.
 - When done, give a short summary of what you changed and which files. Mention anything you couldn't verify.
 

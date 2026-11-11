@@ -140,10 +140,35 @@ class AgentEngine(
 
     /** [plan] = read-only "plan" agent (like opencode's Tab toggle): no edits, no commands, no MCP calls. */
     fun send(sessionId: String, text: String, attachments: List<Attachment> = emptyList(), plan: Boolean = false) {
-        if (isRunning(sessionId) || (text.isBlank() && attachments.isEmpty())) return
-        set(sessionId) { LiveTurn(running = true) }
+        val t = text.trim()
+        if (t.isBlank() && attachments.isEmpty()) return
+        // If a run is already going, the new message steers it (like opencode) instead of being ignored.
+        if (isRunning(sessionId)) { steer(sessionId, t, attachments, plan); return }
+        startTurn(sessionId, t, attachments, plan, insertUser = true)
+    }
+
+    /** Starts a run. When [insertUser] is false the user's message is already stored (a steered message). */
+    private fun startTurn(sessionId: String, text: String, attachments: List<Attachment>, plan: Boolean, insertUser: Boolean) {
+        set(sessionId) { it.copy(running = true) }
         AgentService.start(context)
-        jobs[sessionId] = scope.launch { runTurn(sessionId, text.trim(), attachments, plan) }
+        jobs[sessionId] = scope.launch { runTurn(sessionId, text, attachments, plan, insertUser) }
+    }
+
+    /**
+     * The user sent another message while a run is in progress (steering, like opencode). The message is stored
+     * immediately so it shows in the chat; the running loop re-reads the transcript at every step, so the model
+     * picks it up as soon as the current step (and any tool call) finishes. If the run had already finished in the
+     * meantime, the message becomes a fresh turn instead of being dropped.
+     */
+    private fun steer(sessionId: String, text: String, attachments: List<Attachment>, plan: Boolean) {
+        scope.launch {
+            val now = System.currentTimeMillis()
+            db.messages().insert(MessageEntity(sessionId = sessionId, role = "user", text = text, createdAt = now,
+                attachmentsJson = Attachments.encode(attachments)))
+            db.sessions().touch(sessionId, now)
+            set(sessionId) { it.copy(notice = "Added to the running task — the agent will pick it up at the next step.") }
+            if (!isRunning(sessionId)) startTurn(sessionId, text, attachments, plan, insertUser = false)
+        }
     }
 
     /**
@@ -172,16 +197,19 @@ class AgentEngine(
         set(sessionId) { it.copy(question = null) }
     }
 
-    private suspend fun runTurn(sessionId: String, userText: String, attachments: List<Attachment>, plan: Boolean = false) {
+    private suspend fun runTurn(sessionId: String, userText: String, attachments: List<Attachment>, plan: Boolean = false, insertUser: Boolean = true) {
         val now = System.currentTimeMillis()
         val session = db.sessions().get(sessionId) ?: return finishLive(sessionId, "Session not found")
         val project = db.projects().get(session.projectId) ?: return finishLive(sessionId, "Project not found")
         val runId = UUID.randomUUID().toString()
-        val firstTurn = db.messages().list(sessionId).none { it.role == "user" }
-        db.messages().insert(MessageEntity(sessionId = sessionId, role = "user", text = userText, runId = runId, createdAt = now,
-            attachmentsJson = Attachments.encode(attachments)))
-        if (firstTurn && session.kind != "task") db.sessions().rename(sessionId, titleFrom(userText.ifBlank { attachments.firstOrNull()?.name ?: "Files" }), now)
-        else db.sessions().touch(sessionId, now)
+        // A steered message is already stored, so we only insert for a normal send.
+        if (insertUser) {
+            val firstTurn = db.messages().list(sessionId).none { it.role == "user" }
+            db.messages().insert(MessageEntity(sessionId = sessionId, role = "user", text = userText, runId = runId, createdAt = now,
+                attachmentsJson = Attachments.encode(attachments)))
+            if (firstTurn && session.kind != "task") db.sessions().rename(sessionId, titleFrom(userText.ifBlank { attachments.firstOrNull()?.name ?: "Files" }), now)
+            else db.sessions().touch(sessionId, now)
+        }
 
         val s = settings.state.value
         val candidates = router.candidatesFor(session)

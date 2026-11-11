@@ -438,7 +438,7 @@ private fun Composer(
             }
             Spacer(Modifier.width(4.dp))
             Box(Modifier.weight(1f).padding(vertical = 10.dp)) {
-                if (value.isEmpty()) Text(if (running) "Agent is working…" else "Message or /command", style = MaterialTheme.typography.bodyLarge,
+                if (value.isEmpty()) Text(if (running) "Agent is working… you can add instructions" else "Message or /command", style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 BasicTextField(
                     value, onChange, textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
@@ -448,24 +448,35 @@ private fun Composer(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            val canSend = (value.isNotBlank() || hasAttachments) && !running
-            Box(
-                Modifier.size(40.dp).clip(CircleShape)
-                    .background(
-                        when {
-                            running -> MaterialTheme.colorScheme.onSurface
-                            canSend -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.surfaceContainerHighest
-                        }
-                    )
-                    .clickable(enabled = running || canSend) { if (running) onStop() else onSend() },
-                contentAlignment = Alignment.Center,
-            ) {
-                if (running) Icon(Icons.Filled.Stop, "Stop", tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(20.dp))
-                else Icon(Icons.Filled.ArrowUpward, "Send", tint = if (canSend) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+            val canSend = value.isNotBlank() || hasAttachments
+            if (running) {
+                // While the agent works the user can still steer it: send adds to the running task, Stop ends it.
+                if (canSend) {
+                    RoundIconButton(onClick = onSend, container = MaterialTheme.colorScheme.primary,
+                        icon = Icons.Filled.ArrowUpward, desc = "Add to task", tint = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.width(8.dp))
+                }
+                RoundIconButton(onClick = onStop, container = MaterialTheme.colorScheme.onSurface,
+                    icon = Icons.Filled.Stop, desc = "Stop", tint = MaterialTheme.colorScheme.surface)
+            } else {
+                RoundIconButton(onClick = onSend, enabled = canSend,
+                    container = if (canSend) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    icon = Icons.Filled.ArrowUpward, desc = "Send",
+                    tint = if (canSend) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
+}
+
+@Composable
+private fun RoundIconButton(
+    onClick: () -> Unit, container: androidx.compose.ui.graphics.Color, icon: androidx.compose.ui.graphics.vector.ImageVector,
+    desc: String, tint: androidx.compose.ui.graphics.Color, enabled: Boolean = true,
+) {
+    Box(
+        Modifier.size(40.dp).clip(CircleShape).background(container).clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) { Icon(icon, desc, tint = tint, modifier = Modifier.size(20.dp)) }
 }
 
 @Composable

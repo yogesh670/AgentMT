@@ -150,15 +150,15 @@ playwright install chromium || npx -y playwright install chromium || echo "(Chro
 """.trim()
 
     val KITS = listOf(
-        Kit("Reverse engineering", "REA (rea-agents MCP + skill), apktool, jadx 1.5.6, radare2, Java 17, Node 22",
+        Kit("Reverse engineering", "REA (rea-agents MCP + skill), apktool, jadx 1.5.6, radare2, Java 17, Node 22. About 900 MB–1.2 GB installed.",
             listOf(InstalledTool("linux", "apktool radare2 openjdk-17-jdk-headless unzip file binutils curl procps xz-utils", "apt"),
                 InstalledTool("npm", "rea-agents", "npm"),
                 InstalledTool("github", "rea", "https://github.com/morluto/rea")), JADX),
-        Kit("Web dev", "Node.js, npm, Python 3, git: run a local server and open it in the built-in browser",
+        Kit("Web dev", "Node.js, npm, Python 3, git: run a local server and open it in the built-in browser. About 300 MB installed.",
             listOf(InstalledTool("linux", "nodejs npm python3 python3-pip git curl", "apt"))),
-        Kit("Media", "ffmpeg + latest yt-dlp from pip (the apt one is too old for YouTube)",
+        Kit("Media", "ffmpeg + latest yt-dlp from pip (the apt one is too old for YouTube). About 250 MB installed.",
             listOf(InstalledTool("linux", "ffmpeg python3-pip", "apt"), InstalledTool("python", "yt-dlp", "pip"))),
-        Kit("Motion graphics", "ffmpeg, Python and Node 22 + Playwright/Chromium, plus the motion-graphics skills (Barty-Bart/motion-graphics, MIT). Renders animated clips and B-roll.",
+        Kit("Motion graphics", "ffmpeg, Python and Node 22 + Playwright/Chromium, plus the motion-graphics skills (Barty-Bart/motion-graphics, MIT). Renders animated clips and B-roll. About 700 MB–1 GB installed (the Chromium download is most of it).",
             listOf(InstalledTool("linux", "ffmpeg python3 python3-pip", "apt"),
                 InstalledTool("npm", "playwright", "npm"),
                 InstalledTool("github", "motion-graphics", "https://github.com/Barty-Bart/motion-graphics")), PLAYWRIGHT),

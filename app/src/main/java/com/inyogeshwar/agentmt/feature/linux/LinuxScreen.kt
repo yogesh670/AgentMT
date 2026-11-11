@@ -204,6 +204,11 @@ fun LinuxScreen(c: AppContainer, onBack: () -> Unit, onTerminal: () -> Unit) {
                     }
                 }
             }
+            if (ready && distro == Distro.Ubuntu) item {
+                Text("Kits are optional and install inside Linux only. Each one uses roughly 300 MB–1.2 GB of storage (Chromium, the JDK and Node are the biggest). Remove a tool from the list below to reclaim space.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
+            }
             val shown = tools.filter { filter == "all" || it.kind == filter }
             if (shown.isEmpty()) item {
                 Text(if (!ready) "Install Linux to add tools." else "No tools yet. Add a GitHub repo (skills like REA are detected automatically), Linux packages (apt/apk) or Python tools (pip).",

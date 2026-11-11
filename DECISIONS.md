@@ -142,3 +142,12 @@ one-tap kits (Reverse engineering: apktool, radare2, jadx 1.5.6, REA skill; Web 
 - Added a "Motion graphics" kit (ToolSpecs.KITS): ffmpeg + Python 3 (apt), global Node 22 + Playwright (npm) with `playwright install chromium`, and the motion-graphics repo cloned to /opt/tools/motion-graphics. Cloning it as a tool (not just copying skill text) puts its scripts/engine/reference on disk inside Linux, so the skills' setup.sh/render.js can actually run, and its skills/* surface via ToolStore.skillDirs.
 - Added `Barty-Bart/motion-graphics` to the featured repos in the Install skills dialog for one-tap install into a project.
 - Raised GitHubFetcher.downloadTree caps from 80 files / 4 MB to 300 files / 12 MB so larger skill repos (engine fonts, examples) copy fully.
+
+## D-046 (v0.9.7) Mid-run steering + storage hints + README rewrite
+- Added ability for the user to send extra messages while a run is in progress (steering, like opencode). The running loop re-reads the transcript each step, so the model picks up new instructions immediately.
+- Added approximate storage-size hints to each Linux kit `about` text (~300 MB–1.2 GB depending on kit) and a note under the kits row.
+- Rewrote the README with comprehensive feature descriptions, native-libraries section (16 KB page-aligned libtermux.so rebuild from termux.c), storage notes, and kit-size table.
+- Bumped version to 0.9.7 / versionCode 18 in app/build.gradle.kts.
+- Updated SystemPrompt with a note about mid-task user messages.
+- Added `RoundIconButton` helper and Send/Stop dual button in ChatScreen composer.
+- Added `steer()` and `startTurn()` in AgentEngine with proper guard logic for re-inserted user messages.
