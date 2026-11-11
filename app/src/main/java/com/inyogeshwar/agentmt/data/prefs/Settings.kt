@@ -42,8 +42,6 @@ data class AppSettings(
     val voiceDone: Boolean = false,
     /** Summarize older steps when the conversation since the last summary passes about this many tokens. */
     val compactAtTokens: Int = 60_000,
-    /** Run commands and local MCP servers in the user's own Termux app instead of the built-in Linux. */
-    val useTermux: Boolean = false,
 )
 
 class SettingsStore(context: Context) {
@@ -59,7 +57,6 @@ class SettingsStore(context: Context) {
         defaultModelId = p.getString("defModel", null),
         maxSteps = p.getInt("maxSteps", 25),
         compactAtTokens = p.getInt("compactAtTokens", 60_000),
-        useTermux = p.getBoolean("useTermux", false),
         onboarded = p.getBoolean("onboarded", false),
         keepAwake = p.getBoolean("keepAwake", true),
         customInstructions = p.getString("instructions", "") ?: "",
@@ -82,7 +79,7 @@ class SettingsStore(context: Context) {
             .putString("approval", n.approvalMode.name)
             .putString("defProvider", n.defaultProviderId)
             .putString("defModel", n.defaultModelId)
-            .putInt("maxSteps", n.maxSteps).putInt("compactAtTokens", n.compactAtTokens).putBoolean("useTermux", n.useTermux)
+            .putInt("maxSteps", n.maxSteps).putInt("compactAtTokens", n.compactAtTokens)
             .putBoolean("onboarded", n.onboarded)
             .putBoolean("keepAwake", n.keepAwake)
             .putString("instructions", n.customInstructions)
@@ -103,7 +100,7 @@ class SettingsStore(context: Context) {
 /** Settings as JSON for workspace export (no secrets live here). */
 fun AppSettings.toJson(): org.json.JSONObject = org.json.JSONObject()
     .put("theme", theme.name).put("dynamicColor", dynamicColor).put("approvalMode", approvalMode.name)
-    .put("defaultProviderId", defaultProviderId).put("defaultModelId", defaultModelId).put("maxSteps", maxSteps).put("compactAtTokens", compactAtTokens).put("useTermux", useTermux)
+    .put("defaultProviderId", defaultProviderId).put("defaultModelId", defaultModelId).put("maxSteps", maxSteps).put("compactAtTokens", compactAtTokens)
     .put("keepAwake", keepAwake).put("customInstructions", customInstructions)
     .put("defaultProfileId", defaultProfileId).put("fallbackProfileId", fallbackProfileId)
     .put("rotateKeys", rotateKeys).put("maxAttempts", maxAttempts)
@@ -118,7 +115,6 @@ fun AppSettings.mergeJson(o: org.json.JSONObject): AppSettings = copy(
     defaultModelId = o.optString("defaultModelId").ifBlank { null } ?: defaultModelId,
     maxSteps = o.optInt("maxSteps", maxSteps),
     compactAtTokens = o.optInt("compactAtTokens", compactAtTokens),
-    useTermux = o.optBoolean("useTermux", useTermux),
     keepAwake = o.optBoolean("keepAwake", keepAwake),
     customInstructions = o.optString("customInstructions", customInstructions),
     defaultProfileId = o.optString("defaultProfileId").ifBlank { null } ?: defaultProfileId,

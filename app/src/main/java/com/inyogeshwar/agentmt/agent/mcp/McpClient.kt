@@ -33,7 +33,6 @@ class McpClient(private val configured: String, private val token: String?) {
     private suspend fun rpc(method: String, params: JSONObject?): JSONObject = withContext(Dispatchers.IO) {
         val id = ids.getAndIncrement()
         val msg = JSONObject().put("jsonrpc", "2.0").put("id", id).put("method", method).apply { params?.let { put("params", it) } }
-        if (configured.startsWith(TERMUX_PREFIX)) url = TermuxMcp.ensure(configured.removePrefix(TERMUX_PREFIX).trim())
         stdio?.let { io ->
             val resp = io.request(msg, if (method == "initialize") 60_000 else 600_000)
             resp.optJSONObject("error")?.let { throw McpException(it.optString("message", "MCP error")) }
@@ -114,7 +113,7 @@ class McpClient(private val configured: String, private val token: String?) {
         return text to res.optBoolean("isError", false)
     }
 
-    companion object { const val PROTOCOL = "2025-06-18"; const val LINUX_PREFIX = "linux:"; const val TERMUX_PREFIX = "termux:" }
+    companion object { const val PROTOCOL = "2025-06-18"; const val LINUX_PREFIX = "linux:" }
 }
 
 class McpException(message: String) : Exception(message)
@@ -177,35 +176,3 @@ class StdioMcp private constructor(private val command: String) {
     }
 }
 
-
-/**
- * Runs a stdio MCP server inside the user's Termux behind supergateway (MIT, npm), which serves it as
- * Streamable HTTP on 127.0.0.1:<port>/mcp. Started once; reused while it answers.
- */
-object TermuxMcp {
-    fun port(command: String) = 18100 + Math.floorMod(command.hashCode(), 800)
-
-    private fun alive(port: Int): Boolean = runCatching {
-        Http.client.newCall(Http.get("http://127.0.0.1:$port/healthz", emptyMap())).execute().use { it.isSuccessful }
-    }.getOrDefault(false)
-
-    suspend fun ensure(command: String): String {
-        val t = com.inyogeshwar.agentmt.core.termux.TermuxBridge
-        val port = port(command)
-        val url = "http://127.0.0.1:$port/mcp"
-        if (alive(port)) return url
-        if (!t.ready()) throw McpException("Termux is not connected (Linux → Termux)")
-        val log = "~/.agentmt/mcp-$port.log"
-        val start = "mkdir -p ~/.agentmt; command -v npx >/dev/null || { echo 'npx missing: run pkg install nodejs'; exit 3; }; " +
-            "nohup npx -y supergateway@4 --stdio ${t.shellQuote(command)} --outputTransport streamableHttp --port $port --healthEndpoint /healthz > $log 2>&1 & echo started"
-        val r = t.run(start, null, 20_000) ?: throw McpException("Termux did not answer")
-        if (!r.ok) throw McpException(r.text().take(400))
-        val deadline = System.currentTimeMillis() + 120_000
-        while (System.currentTimeMillis() < deadline) {
-            if (alive(port)) return url
-            kotlinx.coroutines.delay(1500)
-        }
-        val tail = t.run("tail -c 800 $log", null, 10_000)?.stdout.orEmpty()
-        throw McpException("MCP server in Termux did not start in 2 min. Log:\n$tail")
-    }
-}

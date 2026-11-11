@@ -189,7 +189,7 @@ private fun ModelStep(c: AppContainer, onAdvanced: (String) -> Unit, next: () ->
     if (presetId == "ollama") {
         when (val l = local) {
             null -> Row(verticalAlignment = Alignment.CenterVertically) { CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp)); Text("Looking for Ollama / LM Studio on this phone…") }
-            else -> Text(if (l.isEmpty()) "No local server found. Start Ollama (e.g. in Termux) or LM Studio on your network and enter its address." else "Found ${l.joinToString { it.first }}.",
+            else -> Text(if (l.isEmpty()) "No local server found. Start Ollama or LM Studio on your network and enter its address." else "Found ${l.joinToString { it.first }}.",
                 color = if (l.isEmpty()) extra.warning else extra.success, style = MaterialTheme.typography.bodyMedium)
         }
         OutlinedTextField(baseUrl, { baseUrl = it }, label = { Text("Server URL") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))

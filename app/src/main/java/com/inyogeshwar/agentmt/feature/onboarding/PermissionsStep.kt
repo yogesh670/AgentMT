@@ -47,7 +47,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.inyogeshwar.agentmt.BuildConfig
 import com.inyogeshwar.agentmt.app.AppContainer
 import com.inyogeshwar.agentmt.app.theme.LocalExtra
-import com.inyogeshwar.agentmt.core.termux.TermuxBridge
 import com.inyogeshwar.agentmt.data.prefs.ApprovalMode
 
 /** One phone permission AgentMT can use, with how to check it and how to ask for it. */
@@ -63,10 +62,8 @@ internal object PhonePerms {
         if (BuildConfig.FULL) {
             add(PhonePerm("battery", "Run in background", "Keep long tasks and builds alive with the screen off.",
                 runCatching { (ctx.getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(ctx.packageName) }.getOrDefault(false)))
-            if (Build.VERSION.SDK_INT >= 26) add(PhonePerm("install", "Install built apps", "Open Android's installer for APKs the agent builds.",
+            if (Build.VERSION.SDK_INT >= 26) add(PhonePerm("install", "Install apps", "Open Android's installer for APK files.",
                 runCatching { ctx.packageManager.canRequestPackageInstalls() }.getOrDefault(false)))
-            if (TermuxBridge.installed(ctx)) add(PhonePerm("termux", "Use my Termux", "Run commands with the packages you installed in Termux.",
-                TermuxBridge.permitted(ctx)))
         }
     }
 }
@@ -86,7 +83,6 @@ internal fun PermissionsStep(c: AppContainer, next: () -> Unit) {
     val perms = remember(tick) { PhonePerms.list(ctx) }
     val runtime = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         tick++
-        if (granted && perms.any { it.id == "termux" }) c.settings.update { it.copy(useTermux = true) }
     }
     fun open(intent: Intent, fallback: Intent? = null) {
         runCatching { ctx.startActivity(intent) }.onFailure { fallback?.let { f -> runCatching { ctx.startActivity(f) } } }
@@ -99,7 +95,6 @@ internal fun PermissionsStep(c: AppContainer, next: () -> Unit) {
         "battery" -> @Suppress("BatteryLife") open(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkgUri),
             Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         "install" -> open(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, pkgUri))
-        "termux" -> runtime.launch(TermuxBridge.PERMISSION)
         else -> Unit
     }
 
@@ -139,8 +134,6 @@ internal fun PermissionsStep(c: AppContainer, next: () -> Unit) {
             else FilledTonalButton(onClick = { ask(p.id) }) { Text("Allow") }
         }
     }
-    if (perms.any { it.id == "termux" }) Text("Termux also needs a one-time setup: Menu → Linux, build & tools → Termux.",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
 
     Spacer(Modifier.height(24.dp))
     val left = perms.count { !it.granted }

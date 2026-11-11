@@ -367,7 +367,7 @@ private fun Drawer(
                 onClick = { onNav(R0.terminal(currentProjectId)) }, modifier = Modifier.padding(horizontal = 12.dp), colors = itemColors)
             NavigationDrawerItem(label = { Text("Browser") }, icon = { Icon(Icons.Outlined.Language, null) }, selected = false,
                 onClick = { onNav(R0.BROWSER) }, modifier = Modifier.padding(horizontal = 12.dp), colors = itemColors)
-            NavigationDrawerItem(label = { Text("Linux, build & tools") }, icon = { Icon(Icons.Outlined.Memory, null) }, selected = false,
+            NavigationDrawerItem(label = { Text("Linux & tools") }, icon = { Icon(Icons.Outlined.Memory, null) }, selected = false,
                 onClick = { onNav(R0.LINUX) }, modifier = Modifier.padding(horizontal = 12.dp), colors = itemColors)
             NavigationDrawerItem(label = { Text("Tools, skills & plugins") }, icon = { Icon(Icons.Outlined.Extension, null) }, selected = false,
                 onClick = { onNav(R0.TOOLS) }, modifier = Modifier.padding(horizontal = 12.dp), colors = itemColors)

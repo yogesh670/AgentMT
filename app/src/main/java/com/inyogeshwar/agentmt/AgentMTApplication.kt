@@ -11,7 +11,6 @@ class AgentMTApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         com.inyogeshwar.agentmt.agent.ProviderCatalog.init(this)
-        com.inyogeshwar.agentmt.core.termux.TermuxBridge.init(this)
         CrashReporter.install(this)
         container = AppContainer(this)
     }

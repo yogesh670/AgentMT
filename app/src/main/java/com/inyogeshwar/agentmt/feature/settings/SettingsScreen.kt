@@ -143,9 +143,9 @@ fun SettingsScreen(
             item { SectionLabel("Linux & browser") }
             item {
                 Card {
-                    if (!com.inyogeshwar.agentmt.BuildConfig.FULL) ListRow("Linux, build & tools", "Not in the Google Play version. Get the full version from GitHub releases.", Icons.Outlined.Memory)
-                    else ListRow("Linux, build & tools", com.inyogeshwar.agentmt.core.linux.LinuxEnv.distro?.let { "${it.label} ${it.version} active" + if (com.inyogeshwar.agentmt.core.linux.ApkBuildKit.ready()) " · APK build ready" else "" }
-                        ?: "Ubuntu or Alpine, APK builds, GitHub/apt/pip tools", Icons.Outlined.Memory, iconTint = MaterialTheme.colorScheme.primary, onClick = onLinux)
+                    if (!com.inyogeshwar.agentmt.BuildConfig.FULL) ListRow("Linux & tools", "Not in the Google Play version. Get the full version from GitHub releases.", Icons.Outlined.Memory)
+                    else ListRow("Linux & tools", com.inyogeshwar.agentmt.core.linux.LinuxEnv.distro?.let { "${it.label} ${it.version} active" }
+                        ?: "Ubuntu or Alpine, GitHub/apt/pip tools", Icons.Outlined.Memory, iconTint = MaterialTheme.colorScheme.primary, onClick = onLinux)
                     ListRow("Browser", "Built-in browser the agent can use; sign in to sites here", Icons.Outlined.Language, onClick = onBrowser)
                     ListRow("Browser extensions", "${c.browser.scripts.scripts.collectAsState().value.size} installed · userscripts", Icons.Outlined.Extension, onClick = onExtensions)
                 }

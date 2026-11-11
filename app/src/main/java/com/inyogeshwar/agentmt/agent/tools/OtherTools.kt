@@ -12,19 +12,16 @@ import java.util.concurrent.TimeUnit
 class ShellTool : Tool {
     override val name = "run_command"
     override val kind = ToolKind.Execute
-    override val description: String get() = (if (com.inyogeshwar.agentmt.core.termux.TermuxBridge.active)
-        "Environment \"termux\" (default now) runs in the user's own Termux app (bash, pkg install …; node, python and git as they installed them). " +
-            "Termux sees only shared storage (/storage/emulated/0/…), not AgentMT's private workspace. Output is capped near 100 KB. " else "") +
-        (com.inyogeshwar.agentmt.core.linux.LinuxEnv.distro?.let { d ->
+    override val description: String get() = (com.inyogeshwar.agentmt.core.linux.LinuxEnv.distro?.let { d ->
         "Run a shell command in the project folder. Default environment is \"linux\": ${d.label} ${d.version} as root (${d.shell}). " +
             "Install what you need with `${d.installHint}`" +
             (if (d.pkg == "apt") " (python3 python3-pip nodejs npm git build-essential ffmpeg…); pip needs --break-system-packages" else " (python3 py3-pip nodejs npm git build-base ffmpeg…)") +
             ". Use environment \"android\" for Android's own sh (toybox). Output is capped."
     } ?: ("Run a shell command in the project folder using Android's sh (toybox: ls, cat, grep, find, sed, mkdir, cp, mv, rm, wc, sort, diff…). " +
-            "No git, node or python: the user can install Linux from Menu, Linux, build & tools. Output is capped."))
+            "No git, node or python: the user can install Linux from Menu, Linux & tools. Output is capped."))
     override val schema = schema(p("command", "string", "The command line"),
         p("timeout_seconds", "integer", "Max run time, default 60, max 600"),
-        p("environment", "string", "termux (default when the user turned it on), linux (built-in) or android"),
+        p("environment", "string", "linux (built-in, default) or android"),
         p("background", "boolean", "Start and return after a few seconds without waiting (dev servers, watchers). Manage it with background_process."),
         required = listOf("command"))
     override fun target(args: JSONObject) = args.optString("command")
@@ -32,20 +29,7 @@ class ShellTool : Tool {
     override fun preview(args: JSONObject, ctx: ToolContext) = "$ " + args.optString("command")
     override suspend fun run(args: JSONObject, ctx: ToolContext) = withContext(Dispatchers.IO) {
         val timeout = args.optLong("timeout_seconds", 60).coerceIn(1, 600)
-        val termux = com.inyogeshwar.agentmt.core.termux.TermuxBridge
-        val env = args.optString("environment", "").ifBlank { if (termux.active) "termux" else "linux" }
-        if (env == "termux") {
-            if (!termux.ready()) return@withContext ToolResult("Termux is not connected. Ask the user to open Linux → Termux and grant access.", true)
-            val dir = ctx.ws.root.absolutePath
-            if (!termux.canSee(dir)) return@withContext ToolResult("Termux cannot see this project folder ($dir). Use a project in shared storage (/storage/emulated/0/…), or environment linux.", true)
-            val cmd = if (args.optBoolean("background", false))
-                "mkdir -p ~/.agentmt/bg; L=~/.agentmt/bg/$(date +%s).log; nohup bash -lc ${termux.shellQuote(args.optString("command"))} > \"\$L\" 2>&1 & sleep 4; echo \"started pid \$! (log \$L)\"; tail -c 3000 \"\$L\""
-                else args.optString("command")
-            val r = termux.run(cmd, dir, timeout * 1000 + 5000)
-                ?: return@withContext ToolResult("Timed out after ${timeout}s waiting for Termux (the command may still be running there).", true)
-            val text = r.text()
-            return@withContext ToolResult(if (text.length > 30_000) text.take(30_000) + "\n… output truncated" else text, isError = !r.ok)
-        }
+        val env = args.optString("environment", "").ifBlank { "linux" }
         val linux = com.inyogeshwar.agentmt.core.linux.LinuxEnv.ready && env != "android"
         val pb = if (linux) com.inyogeshwar.agentmt.core.linux.LinuxEnv.process(ctx.ws.root, args.optString("command"))
             else ProcessBuilder("/system/bin/sh", "-c", args.optString("command")).directory(ctx.ws.root)

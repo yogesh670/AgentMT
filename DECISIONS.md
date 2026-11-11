@@ -115,3 +115,8 @@ one-tap kits (Reverse engineering: apktool, radare2, jadx 1.5.6, REA skill; Web 
 
 ## D-040 (v0.9.3, 2026-11-08) Never bind host "/" into proot
 - Device: kits failed "proot error: '/usr/bin/env' not found (root = /, cwd = /)". LinuxJobs.run default cwd was File("/") and argv() bound every cwd with -b, so host / covered the rootfs. LinuxEnv.guestCwd(): no bind for /, parents of the rootfs, or shared storage; paths inside the rootfs are translated to guest paths. GuestCwdTest.
+
+## v0.9.4 — D-041 Remove the Termux-app bridge and the on-phone APK builder
+- Removed `core/termux/TermuxBridge`, the Linux → Termux card, the `termux:` MCP transport, the `useTermux` setting and the `termux` environment of `run_command`, plus the Termux permission/`<queries>` in the full manifest. AgentMT no longer depends on the user installing the Termux app; commands run in the built-in Linux or Android's shell.
+- Removed `core/linux/ApkBuildKit` and the APK build section/setting text. The agent can still install tools and run Gradle, but AgentMT does not ship a preconfigured Android SDK/JDK build kit on the phone.
+- The bundled terminal UI still uses the Apache-2.0 termux terminal-view/emulator libraries; that is a library dependency, not the Termux app.

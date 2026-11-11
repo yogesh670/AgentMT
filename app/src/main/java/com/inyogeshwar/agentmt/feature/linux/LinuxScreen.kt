@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.inyogeshwar.agentmt.app.AppContainer
 import com.inyogeshwar.agentmt.app.theme.LocalExtra
-import com.inyogeshwar.agentmt.core.linux.ApkBuildKit
 import com.inyogeshwar.agentmt.core.linux.Distro
 import com.inyogeshwar.agentmt.core.linux.InstalledTool
 import com.inyogeshwar.agentmt.core.linux.LinuxEnv
@@ -42,7 +41,7 @@ import kotlinx.coroutines.withContext
 
 private val KINDS = listOf("github" to "GitHub repo", "linux" to "Linux package", "python" to "Python tool", "npm" to "Node CLI")
 
-/** Linux subsystem, on-phone APK builds, and tools installed into Linux, in one place. */
+/** Linux subsystem and tools installed into Linux, in one place. */
 @Composable
 fun LinuxScreen(c: AppContainer, onBack: () -> Unit, onTerminal: () -> Unit) {
     val linux by LinuxEnv.state.collectAsState()
@@ -58,8 +57,6 @@ fun LinuxScreen(c: AppContainer, onBack: () -> Unit, onTerminal: () -> Unit) {
     var removeDistro by remember { mutableStateOf<Distro?>(null) }
     var importList by remember { mutableStateOf<List<InstalledTool>?>(null) }
     var note by remember { mutableStateOf<String?>(null) }
-    var buildReady by remember { mutableStateOf(ApkBuildKit.ready()) }
-    LaunchedEffect(jobs, linux) { buildReady = ApkBuildKit.ready() }
     val distro = LinuxEnv.distro
     val ready = linux is LinuxEnv.State.Ready
 
@@ -110,11 +107,9 @@ fun LinuxScreen(c: AppContainer, onBack: () -> Unit, onTerminal: () -> Unit) {
         }
     }
 
-    AppScaffold("Linux, build & tools", onBack) { pad ->
+    AppScaffold("Linux & tools", onBack) { pad ->
         LazyColumn(contentPadding = pad) {
             // ---------- Linux subsystem ----------
-            item { SectionLabel("Termux") }
-            item { TermuxCard(c) }
             item { SectionLabel("Linux subsystem") }
             item {
                 Card {
@@ -146,7 +141,7 @@ fun LinuxScreen(c: AppContainer, onBack: () -> Unit, onTerminal: () -> Unit) {
                                         RadioButton(pick == d, null)
                                         Column(Modifier.weight(1f).padding(start = 8.dp)) {
                                             Text("${d.label} ${d.version}" + if (d == Distro.Ubuntu) "  (recommended)" else "", style = MaterialTheme.typography.bodyLarge)
-                                            Text((if (d == Distro.Ubuntu) "apt, glibc: runs most Linux software and the APK build kit" else "apk, tiny and fast")
+                                            Text((if (d == Distro.Ubuntu) "apt, glibc: runs most Linux software" else "apk, tiny and fast")
                                                 + " · ${d.downloadMb} MB download" + if (inst) " · installed" else "",
                                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
@@ -170,43 +165,6 @@ fun LinuxScreen(c: AppContainer, onBack: () -> Unit, onTerminal: () -> Unit) {
                                 }
                                 if (ready) Text("Android commands inside Linux: agentmt-open <url|file>, agentmt-share, agentmt-clipboard-get / -set, agentmt-notify, agentmt-toast, agentmt-install <file.apk>.",
                                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ---------- APK build ----------
-            item { SectionLabel("APK build") }
-            item {
-                val running = jobs.any { it.running && it.title == ApkBuildKit.TITLE }
-                Card {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.Android, null, tint = MaterialTheme.colorScheme.secondary)
-                            Spacer(Modifier.width(10.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text("Build APKs on this phone", style = MaterialTheme.typography.titleMedium)
-                                Text("Kotlin, Jetpack Compose and Java apps. The agent writes the app, builds it with Gradle, fixes build errors and gives you the APK.",
-                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                        when {
-                            buildReady -> {
-                                Pill("Ready", extra.success)
-                                Text(ApkBuildKit.versions(), fontFamily = FontFamily.Monospace, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(onClick = { c.linuxJobs.run("Check build tools", ApkBuildKit.checkScript) }, enabled = !running) { Text("Re-check") }
-                                    OutlinedButton(onClick = { c.linuxJobs.run(ApkBuildKit.TITLE, ApkBuildKit.installScript) }, enabled = !running) { Text("Reinstall") }
-                                }
-                            }
-                            !ready -> Text("Install Linux first (Ubuntu recommended).", style = MaterialTheme.typography.bodyMedium)
-                            else -> {
-                                Text("Installs OpenJDK 17, Gradle 8.9, Android SDK 35 and arm64 aapt2 into ${distro?.label}. About 600 MB download and 1.5 GB of space; takes 10–30 minutes.",
-                                    style = MaterialTheme.typography.bodySmall)
-                                Button(onClick = { c.linuxJobs.run(ApkBuildKit.TITLE, ApkBuildKit.installScript) }, enabled = !running) {
-                                    Text(if (running) "Setting up…" else "Install build tools")
-                                }
                             }
                         }
                     }

@@ -177,15 +177,6 @@ class V081Test {
 }
 
 class V09Test {
-    @Test fun termuxQuotingAndVisibility() {
-        val t = com.inyogeshwar.agentmt.core.termux.TermuxBridge
-        org.junit.Assert.assertEquals("'it'\\''s'", t.shellQuote("it's"))
-        org.junit.Assert.assertTrue(t.canSee("/storage/emulated/0/MT2/VibeCoded"))
-        org.junit.Assert.assertFalse(t.canSee("/data/user/0/com.inyogeshwar.agentmt/files/workspace"))
-        val p = com.inyogeshwar.agentmt.agent.mcp.TermuxMcp.port("rea mcp")
-        org.junit.Assert.assertTrue(p in 18100 until 18900)
-    }
-
     @Test fun continueKeepsFinishedToolSteps() {
         val rows = listOf(
             com.inyogeshwar.agentmt.data.db.MessageEntity(id = 1, sessionId = "s", role = "user", text = "build it", createdAt = 1),

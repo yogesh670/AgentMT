@@ -107,8 +107,8 @@ class AppLaunchTest {
         ActivityScenario.launch(MainActivity::class.java).use {
             compose.waitForIdle()
             compose.onNodeWithContentDescription("Menu").performClick(); compose.waitForIdle()
-            compose.onAllNodesWithText("Linux, build & tools")[0].performClick(); compose.waitForIdle()
-            compose.onNodeWithText("Build APKs on this phone").assertExists()
+            compose.onAllNodesWithText("Linux & tools")[0].performClick(); compose.waitForIdle()
+            compose.onNodeWithText("Inbuilt Linux").assertExists()
             it.onActivity { a -> a.onBackPressedDispatcher.onBackPressed() }; compose.waitForIdle()
             compose.onNodeWithContentDescription("Menu").performClick(); compose.waitForIdle()
             compose.onAllNodesWithText("Browser")[0].performClick(); compose.waitForIdle()

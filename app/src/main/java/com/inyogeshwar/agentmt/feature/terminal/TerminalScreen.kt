@@ -212,7 +212,7 @@ private fun LinuxSheet(state: LinuxEnv.State, onDismiss: () -> Unit, onInstall: 
                     pkgs.chunked(3).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { row.forEach { (l, cmd) -> AssistChip(onClick = { onRun(cmd) }, label = { Text(l) }) } }
                     }
-                    TextButton(onClick = onRemove) { Text("Manage Linux, build tools & tools") }
+                    TextButton(onClick = onRemove) { Text("Manage Linux & tools") }
                 }
             }
         }

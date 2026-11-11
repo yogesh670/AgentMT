@@ -77,11 +77,11 @@ fun McpEditScreen(c: AppContainer, id: String?, onBack: () -> Unit) {
         if (id != null) IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, "Delete", tint = MaterialTheme.colorScheme.error) }
     }) { pad ->
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Remote servers (Streamable HTTP), or a local stdio server that runs inside Linux: write linux: and the command (built-in Linux), or termux: to run it in your own Termux, e.g. termux:npx -y rea-agents mcp",
+            Text("Remote servers (Streamable HTTP), or a local stdio server that runs inside Linux: write linux: and the command, e.g. linux:npx -y rea-agents mcp",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(url, { url = it }, label = { Text("Server URL") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri), supportingText = { Text("https://…/mcp  ·  linux:rea mcp  ·  termux:rea mcp") })
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri), supportingText = { Text("https://…/mcp  ·  linux:rea mcp") })
             OutlinedTextField(token, { token = it }, label = { Text("Bearer token (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                 placeholder = { if (hasToken) Text("Saved — leave blank to keep") }, visualTransformation = PasswordVisualTransformation())
             Row(verticalAlignment = Alignment.CenterVertically) { Text("Enabled", Modifier.weight(1f)); Switch(enabled, { enabled = it }) }
@@ -90,7 +90,7 @@ fun McpEditScreen(c: AppContainer, id: String?, onBack: () -> Unit) {
                 androidx.compose.material3.FilterChip(projectId == null, { projectId = null }, label = { Text("All projects") })
                 projects.forEach { p -> androidx.compose.material3.FilterChip(projectId == p.id, { projectId = p.id }, label = { Text(p.name) }) }
             }
-            OutlinedButton(enabled = !busy && (url.startsWith("http") || url.startsWith("linux:") || url.startsWith("termux:")), onClick = {
+            OutlinedButton(enabled = !busy && (url.startsWith("http") || url.startsWith("linux:")), onClick = {
                 busy = true; status = null
                 scope.launch {
                     runCatching { val cl = McpClient(url.trim(), tokenNow()); cl.listTools().also { if (name.isBlank()) name = cl.serverName ?: "" } }
@@ -106,7 +106,7 @@ fun McpEditScreen(c: AppContainer, id: String?, onBack: () -> Unit) {
                 Text("Tools", style = MaterialTheme.typography.titleSmall)
                 tools.forEach { Text("• $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
-            Button(enabled = (url.startsWith("http") || url.startsWith("linux:") || url.startsWith("termux:")) && name.isNotBlank(), onClick = {
+            Button(enabled = (url.startsWith("http") || url.startsWith("linux:")) && name.isNotBlank(), onClick = {
                 scope.launch {
                     c.db.mcp().upsert(McpServerEntity(sid, name.trim(), url.trim(), enabled, tools.joinToString("\n"),
                         if (status?.first == true) "ok" else null, if (created == 0L) System.currentTimeMillis() else created, projectId, pluginId))

@@ -39,6 +39,9 @@ See DECISIONS.md for why things are the way they are.
 - Build / Plan toggle in the composer (Plan = read-only). /init (writes AGENTS.md), /plan.
 - Tests: AppLaunchTest (Robolectric) launches the app, walks onboarding, opens every main screen, and upgrades a v0.2 database. 20 tests total.
 
+## v0.9.4
+- Removed the Termux-app bridge (commands/MCP run in the built-in Linux or Android shell) and the on-phone APK build kit.
+
 ## v0.6.0
 - Builds: `./gradlew :app:assembleFullDebug` (GitHub release, everything) and `:app:assemblePlayDebug` / `:app:bundlePlayRelease` (Google Play). See LICENSE_AUDIT.md for why.
 - Linux: Back up / Restore / Reset a distro. Android commands inside Linux: agentmt-open, agentmt-share, agentmt-clipboard-get, agentmt-clipboard-set, agentmt-notify, agentmt-toast.

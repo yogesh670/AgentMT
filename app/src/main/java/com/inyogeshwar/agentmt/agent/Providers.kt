@@ -28,7 +28,7 @@ object ProviderPresets {
         ProviderPreset("deepseek", "DeepSeek", "openai", "https://api.deepseek.com/v1",
             listOf("deepseek-chat", "deepseek-reasoner"), "https://platform.deepseek.com/api_keys"),
         ProviderPreset("ollama", "Ollama (local)", "openai", "http://localhost:11434/v1",
-            listOf("qwen2.5-coder:7b"), null, needsKey = false, note = "Runs on your own machine or in Termux."),
+            listOf("qwen2.5-coder:7b"), null, needsKey = false, note = "Runs on your own machine or on your network."),
         ProviderPreset("custom", "Custom (OpenAI-compatible)", "openai", "https://", emptyList(), null, needsKey = false),
     )
     val featured: List<ProviderPreset> get() = featuredList
