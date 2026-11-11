@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+}
+
+// Release signing: read rootProject/keystore.properties (gitignored) when present, else the release APK is unsigned.
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
 }
 
 android {
@@ -13,8 +21,8 @@ android {
         applicationId = "com.inyogeshwar.agentmt"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "0.9.3"
+        versionCode = 16
+        versionName = "0.9.5"
     }
 
     // full: everything (GitHub / F-Droid style release, like Termux). play: Google Play policy-safe build
@@ -25,11 +33,23 @@ android {
         create("play") { dimension = "dist"; buildConfigField("boolean", "FULL", "false"); versionNameSuffix = "-play" }
     }
 
+    signingConfigs {
+        if (keystorePropsFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystorePropsFile.exists()) signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
