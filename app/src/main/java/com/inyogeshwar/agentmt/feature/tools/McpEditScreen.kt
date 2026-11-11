@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
@@ -61,8 +62,13 @@ fun McpEditScreen(c: AppContainer, id: String?, onBack: () -> Unit) {
     var confirmDelete by remember { mutableStateOf(false) }
     var projectId by remember { mutableStateOf<String?>(null) }
     var pluginId by remember { mutableStateOf<String?>(null) }
+    var loggedIn by remember { mutableStateOf(false) }
+    var oauthBusy by remember { mutableStateOf(false) }
     val projects by remember { c.db.projects().observeAll() }.collectAsState(initial = emptyList())
     val extra = LocalExtra.current
+
+    LaunchedEffect(url) { loggedIn = url.trim().startsWith("http") && c.mcpOAuth.isLoggedIn(url.trim()) }
+    LaunchedEffect(Unit) { c.mcpOAuth.events.collect { if (it.serverUrl == url.trim()) status = it.ok to it.message } }
 
     LaunchedEffect(id) {
         if (id != null) c.db.mcp().get(id)?.let {
@@ -71,7 +77,8 @@ fun McpEditScreen(c: AppContainer, id: String?, onBack: () -> Unit) {
             hasToken = c.vault.has("mcp:$id")
         }
     }
-    fun tokenNow() = token.trim().ifEmpty { c.vault.get("mcp:$sid") }
+    suspend fun tokenNow() = token.trim().ifEmpty { c.vault.get("mcp:$sid") }
+        ?: if (url.trim().startsWith("http")) runCatching { c.mcpOAuth.accessToken(url.trim()) }.getOrNull() else null
 
     AppScaffold(if (id == null) "Add MCP server" else name, onBack, actions = {
         if (id != null) IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, "Delete", tint = MaterialTheme.colorScheme.error) }
@@ -84,6 +91,20 @@ fun McpEditScreen(c: AppContainer, id: String?, onBack: () -> Unit) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri), supportingText = { Text("https://…/mcp  ·  linux:rea mcp") })
             OutlinedTextField(token, { token = it }, label = { Text("Bearer token (optional)") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                 placeholder = { if (hasToken) Text("Saved — leave blank to keep") }, visualTransformation = PasswordVisualTransformation())
+            if (url.trim().startsWith("http")) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(enabled = !oauthBusy, onClick = {
+                        oauthBusy = true
+                        scope.launch {
+                            c.mcpOAuth.begin(url.trim()); oauthBusy = false
+                            loggedIn = c.mcpOAuth.isLoggedIn(url.trim())
+                        }
+                    }) { Text(if (loggedIn) "Sign in again (OAuth)" else "Sign in with browser (OAuth)") }
+                    if (loggedIn) TextButton(onClick = { c.mcpOAuth.logout(url.trim()); loggedIn = false; status = true to "Signed out." }) { Text("Sign out") }
+                }
+                Text("If the server requires OAuth, sign in here instead of pasting a token.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Row(verticalAlignment = Alignment.CenterVertically) { Text("Enabled", Modifier.weight(1f)); Switch(enabled, { enabled = it }) }
             Text("Available in", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Search
@@ -45,6 +46,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -78,6 +80,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.inyogeshwar.agentmt.agent.ApprovalAnswer
 import com.inyogeshwar.agentmt.agent.PendingApproval
+import com.inyogeshwar.agentmt.agent.PendingQuestion
 import com.inyogeshwar.agentmt.agent.tools.ToolKind
 import com.inyogeshwar.agentmt.app.theme.LocalExtra
 import com.inyogeshwar.agentmt.app.theme.Mono
@@ -287,6 +290,46 @@ fun ApprovalCard(a: PendingApproval, onAnswer: (ApprovalAnswer) -> Unit) {
         }
         TextButton(onClick = { onAnswer(ApprovalAnswer.Always) }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text("Always allow ${if (a.kind == ToolKind.Execute) "this command" else "this"}", style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
+
+@Composable
+fun QuestionCard(q: PendingQuestion, onAnswer: (String) -> Unit) {
+    var text by rememberSaveable(q.id) { mutableStateOf("") }
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), RoundedCornerShape(20.dp)).padding(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(30.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.HelpOutline, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(Modifier.width(10.dp))
+            Text("The agent needs your input", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        }
+        Spacer(Modifier.size(10.dp))
+        SelectionContainer { Text(q.question, style = MaterialTheme.typography.bodyLarge) }
+        if (q.options.isNotEmpty()) {
+            Spacer(Modifier.size(12.dp))
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                q.options.forEach { option ->
+                    OutlinedButton(onClick = { onAnswer(option) }, modifier = Modifier.fillMaxWidth()) {
+                        Text(option, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.size(12.dp))
+        OutlinedTextField(
+            value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Type your own answer") }, maxLines = 4, shape = RoundedCornerShape(14.dp),
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { onAnswer("(skipped)") }) { Text("Skip") }
+            Spacer(Modifier.width(8.dp))
+            Button(onClick = { onAnswer(text) }, enabled = text.isNotBlank()) { Text("Send") }
         }
     }
 }

@@ -7,13 +7,21 @@ import org.json.JSONObject
 /** What a tool does, which drives the default approval policy. */
 enum class ToolKind { Read, Write, Execute, Network }
 
-data class ToolResult(val text: String, val isError: Boolean = false, val changedPath: String? = null)
+data class ToolResult(
+    val text: String,
+    val isError: Boolean = false,
+    val changedPath: String? = null,
+    /** Text to echo into the chat as a user message, e.g. the answer picked in ask_user. */
+    val echo: String? = null,
+)
 
 class ToolContext(
     val ws: Workspace,
     val skills: com.inyogeshwar.agentmt.agent.skills.SkillStore,
     val sessionId: String = "",
     val onTodos: suspend (String) -> Unit = {},
+    /** Ask the user a question and wait for their answer; null when the run is stopped. */
+    val onAsk: suspend (question: String, options: List<String>) -> String? = { _, _ -> null },
 )
 
 interface Tool {

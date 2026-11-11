@@ -124,3 +124,15 @@ one-tap kits (Reverse engineering: apktool, radare2, jadx 1.5.6, REA skill; Web 
 ## v0.9.4 — D-042 Installed tools first
 - Added the read-only `installed_tools` tool: it lists `ToolStore` entries and, for `need=<program>`, checks Linux `command -v` plus the known tool dirs. `SystemPrompt`, `ToolStore.promptNote()` and `run_command` all tell the model to use what is installed before installing anything; `install_tool` returns "already installed" for an existing entry.
 - Kept the welcome copy free of nav labels ("Web" instead of "Browser") so Robolectric text selectors stay unambiguous.
+
+## D-043 (v0.9.5) Ported Clozed Code features — ideas only, clean-room implementation
+- `patch` tool (agent/tools/PatchTool.kt): Clozed Code's stripped-down diff format (`*** Begin/End Patch`, `*** Add/Update/Delete File`, `@@` hunks, optional `*** Move to`). Behavior ported independently; no decompiled code copied. All hunks are matched against current file text before anything is written, so a bad hunk fails the whole patch.
+- `diagnostics` tool (agent/tools/DiagnosticsTool.kt): JSON/XML validity plus bracket/string balance for common source languages; not a compiler.
+- `ask_user` tool (agent/tools/QuestionTool.kt): pauses the run and waits for an answer (options or free text); echoed into chat as a user message so it stays visible. Wired into AgentEngine via ToolContext.onAsk + PendingQuestion + questionWaiters, plus QuestionCard in ChatParts and ChatViewModel.answerQuestion. ToolResult gained an `echo` field for this.
+- Registered patch/diagnostics/question in AgentEngine.builtinTools. SystemPrompt now prefers patch for multi-file edits, diagnostics after edits, and ask_user for user decisions.
+- Tests: PatchToolTest, DiagnosticsTest (Robolectric). :app:assembleFull/PlayDebug and both unit-test tasks pass.
+
+## D-044 (v0.9.5) Bundled REA skill and MCP OAuth
+- Bundled the `reverse-engineer-anything` skill (assets/skills/reverse-engineer-anything/SKILL.md), reworded and mobile-adapted from rea (https://github.com/morluto/rea, MIT; attribution kept in the file). It is a single file because asset skills cannot load supporting `references/`. It tells the agent to use the REA MCP tools when present (`linux:rea mcp`), fall back to `npx -y rea-agents@latest`, and, without either, decompile APKs with JADX/apktool inside the built-in Linux — with the same evidence discipline (observations vs inferences vs unknowns).
+- MCP OAuth (agent/mcp/McpOAuth.kt, clean-room from the same idea in Clozed Code; no code copied): authorization-code + PKCE for remote MCP servers, using RFC 9728 protected-resource metadata and RFC 8414 authorization-server metadata with dynamic client registration (RFC 7591). Tokens are stored in the encrypted SecretVault; the browser redirects to `agentmt://oauth/mcp` (manifest intent-filter, launchMode singleTask, handled in MainActivity). A manually entered Bearer token still wins over OAuth. UI: "Sign in with browser (OAuth)" / "Sign out" on the MCP server screen.
+- Not device-tested: the OAuth round trip needs a live OAuth MCP server; the code compiles and the app builds for both flavors.

@@ -27,6 +27,7 @@ import java.util.UUID
 class AppContainer(val context: Context) {
     val db = AppDatabase.build(context)
     val vault = SecretVault(context)
+    val mcpOAuth = com.inyogeshwar.agentmt.agent.mcp.McpOAuth(context, vault)
     val settings = SettingsStore(context)
     val skills = SkillStore(context)
     val commands = CommandStore(context)
@@ -50,6 +51,7 @@ class AppContainer(val context: Context) {
             com.inyogeshwar.agentmt.agent.tools.InstalledToolsTool(toolStore),
             com.inyogeshwar.agentmt.agent.tools.InstallTool(toolStore),
         )
+        engine.oauthToken = { url -> if (url.startsWith("http")) runCatching { mcpOAuth.accessToken(url) }.getOrNull() else null }
         engine.envNote = { toolStore.promptNote() +
             (if (com.inyogeshwar.agentmt.core.linux.LinuxEnv.ready) "\n# Android from Linux\nInside Linux these commands reach the phone: agentmt-open <url|file> (open in an app), agentmt-share <file|text>, agentmt-clipboard-get, agentmt-clipboard-set <text>, agentmt-notify <title>, agentmt-toast <text>, agentmt-install <file.apk> (open Android's installer). Long-running servers: run_command with background=true, then open http://localhost:PORT with the browser tool.\n" else "") }
         appScope.launch { db.plugins().observeAll().collect { refreshPluginDirs() } }

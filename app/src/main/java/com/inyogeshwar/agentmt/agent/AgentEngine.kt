@@ -60,6 +60,13 @@ data class PendingApproval(
     val preview: String?,
 )
 
+/** A question from the ask_user tool, waiting for the user's answer. */
+data class PendingQuestion(
+    val id: String,
+    val question: String,
+    val options: List<String>,
+)
+
 /** In-memory state of a session's current turn. Everything durable is in Room. */
 data class LiveTurn(
     val running: Boolean = false,
@@ -67,6 +74,7 @@ data class LiveTurn(
     val reasoning: String = "",
     val activeTool: String? = null,
     val approval: PendingApproval? = null,
+    val question: PendingQuestion? = null,
     val error: String? = null,
     val runId: String? = null,
     val step: Int = 0,
@@ -89,12 +97,15 @@ class AgentEngine(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val jobs = HashMap<String, Job>()
     private val waiters = HashMap<String, CompletableDeferred<ApprovalAnswer>>()
+    private val questionWaiters = HashMap<String, CompletableDeferred<String?>>()
 
     private val _live = MutableStateFlow<Map<String, LiveTurn>>(emptyMap())
     val live: StateFlow<Map<String, LiveTurn>> = _live.asStateFlow()
 
     val builtinTools: List<Tool> = listOf(
-        ListDirTool(), ReadFileTool(), GlobTool(), GrepTool(), WriteFileTool(), EditFileTool(), ShellTool(), WebFetchTool(), SkillTool(), TodoTool(),
+        ListDirTool(), ReadFileTool(), GlobTool(), GrepTool(), WriteFileTool(), EditFileTool(), com.inyogeshwar.agentmt.agent.tools.PatchTool(),
+        com.inyogeshwar.agentmt.agent.tools.DiagnosticsTool(), ShellTool(), WebFetchTool(), SkillTool(), TodoTool(),
+        com.inyogeshwar.agentmt.agent.tools.QuestionTool(),
         com.inyogeshwar.agentmt.agent.tools.BrowserReadTool(), com.inyogeshwar.agentmt.agent.tools.BrowserTool(),
         com.inyogeshwar.agentmt.agent.tools.BackgroundProcessTool(),
     )
@@ -111,6 +122,9 @@ class AgentEngine(
 
     /** Extra system-prompt sections (build kit, installed tools), set by AppContainer. */
     var envNote: () -> String = { "" }
+
+    /** Resolves an OAuth access token for an MCP server URL (set by AppContainer). Manual tokens still win. */
+    var oauthToken: suspend (String) -> String? = { null }
     private val voice by lazy { com.inyogeshwar.agentmt.core.DoneVoice(context) }
 
     init {
@@ -140,6 +154,8 @@ class AgentEngine(
 
     fun stop(sessionId: String) {
         waiters.remove(_live.value[sessionId]?.approval?.id)?.complete(ApprovalAnswer.Deny)
+        questionWaiters.remove(_live.value[sessionId]?.question?.id)?.complete(null)
+        set(sessionId) { it.copy(approval = null, question = null) }
         jobs[sessionId]?.cancel()
     }
 
@@ -147,6 +163,13 @@ class AgentEngine(
         val a = _live.value[sessionId]?.approval ?: return
         waiters.remove(a.id)?.complete(answer)
         set(sessionId) { it.copy(approval = null) }
+    }
+
+    /** Completes the pending ask_user question. */
+    fun answerQuestion(sessionId: String, text: String) {
+        val q = _live.value[sessionId]?.question ?: return
+        questionWaiters.remove(q.id)?.complete(text.trim())
+        set(sessionId) { it.copy(question = null) }
     }
 
     private suspend fun runTurn(sessionId: String, userText: String, attachments: List<Attachment>, plan: Boolean = false) {
@@ -178,7 +201,22 @@ class AgentEngine(
         }
         val ws = Workspace(rootDir)
         skills.setProject(ws.root)
-        val ctx = ToolContext(ws, skills, sessionId) { json -> db.sessions().setTodos(sessionId, json) }
+        val ctx = ToolContext(
+            ws, skills, sessionId,
+            onTodos = { json -> db.sessions().setTodos(sessionId, json) },
+            onAsk = { question, options ->
+                val pending = PendingQuestion(UUID.randomUUID().toString(), question, options)
+                val answer = CompletableDeferred<String?>()
+                questionWaiters[pending.id] = answer
+                set(sessionId) { it.copy(question = pending) }
+                try {
+                    answer.await()
+                } finally {
+                    questionWaiters.remove(pending.id)
+                    set(sessionId) { it.copy(question = null) }
+                }
+            },
+        )
 
         val (mcpTools, mcpNote) = loadMcpTools(project.id)
         val tools = (builtinTools + extraTools + mcpTools).let { all -> if (plan) all.filter { it.kind == ToolKind.Read || it.name == "web_fetch" } else all }
@@ -295,6 +333,10 @@ class AgentEngine(
                     }
                     result.changedPath?.let { changed += it }
                     insertTool(sessionId, runId, call, result.text, if (result.isError) "error" else "ok")
+                    result.echo?.let { answer ->
+                        db.messages().insert(MessageEntity(sessionId = sessionId, role = "user", text = answer, runId = runId,
+                            createdAt = System.currentTimeMillis()))
+                    }
                     run = run.copy(toolCalls = run.toolCalls + 1, changedFiles = changed.joinToString("\n"))
                     db.runs().upsert(run)
                 }
@@ -378,7 +420,7 @@ class AgentEngine(
         val out = ArrayList<Tool>(); val failed = ArrayList<String>()
         for (srv in servers) {
             runCatching {
-                val c = McpClient(srv.url, vault.get("mcp:${srv.id}"))
+                val c = McpClient(srv.url, vault.get("mcp:${srv.id}") ?: oauthToken(srv.url))
                 val slug = srv.name.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_').take(20).ifEmpty { "srv" }
                 c.listTools().forEach { out += McpTool(slug, srv.name, it, c) }
                 db.mcp().upsert(srv.copy(lastStatus = "ok"))

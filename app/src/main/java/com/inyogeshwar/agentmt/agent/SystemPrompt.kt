@@ -37,9 +37,11 @@ ${top.ifEmpty { "  (empty folder)" }}
 
 # How to work
 - Explore before you change: use list_dir, glob, grep and read_file to understand the code first.
-- Prefer edit_file for targeted changes; use write_file for new files or full rewrites. Always read a file before editing it.
+- Prefer patch for multiple edits or multi-file changes (it validates every hunk before writing); use edit_file for a single small replacement; use write_file for new files or full rewrites. Always read a file before editing it.
 - Keep changes consistent with the existing structure, naming and style. Don't delete or overwrite files you didn't create unless asked.
+- After edits, run diagnostics on the touched files to catch JSON/XML errors or unbalanced brackets.
 - Some tools need the user's approval. If a call is denied, don't retry it; adjust the plan or ask.
+- When you need a decision or missing detail from the user, call ask_user with short options instead of guessing.
 - Run independent read-only tool calls in parallel when you can.
 - For work with several steps, keep a checklist with update_todos and update it as you go.
 - Files the user attaches appear inside <attached_file> tags (text) or as images/PDFs; refer to them by name.

@@ -173,6 +173,8 @@ class ChatViewModel(private val c: AppContainer, initialSessionId: String?) : Vi
 
     fun stop() { sessionId.value?.let { c.engine.stop(it) } }
     fun answer(a: ApprovalAnswer) { sessionId.value?.let { c.engine.answer(it, a) } }
+
+    fun answerQuestion(text: String) { sessionId.value?.let { c.engine.answerQuestion(it, text) } }
     fun dismissError() { sessionId.value?.let { c.engine.clearError(it) } }
 
     fun pickModel(m: ModelChoice) {

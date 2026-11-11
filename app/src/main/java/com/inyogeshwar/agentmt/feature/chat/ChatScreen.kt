@@ -152,12 +152,12 @@ fun ChatScreen(
     val projectName = session?.projectName ?: draftProject?.name ?: "Playground"
     val projectId = session?.projectId ?: draftProject?.id
 
-    val totalCount = items.size + (if (live.running) 2 else 0) + (if (live.approval != null) 1 else 0) + (if (live.error != null) 1 else 0)
+    val totalCount = items.size + (if (live.running) 2 else 0) + (if (live.approval != null) 1 else 0) + (if (live.question != null) 1 else 0) + (if (live.error != null) 1 else 0)
     val atBottom by remember { derivedStateOf { !listState.canScrollForward } }
     var follow by remember { mutableStateOf(true) }
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) follow = atBottom }
     LaunchedEffect(atBottom) { if (atBottom) follow = true }
-    LaunchedEffect(totalCount, live.streamingText.length / 120, live.approval, live.activeTool) {
+    LaunchedEffect(totalCount, live.streamingText.length / 120, live.approval, live.question, live.activeTool) {
         if (totalCount > 0 && follow) runCatching { listState.scrollToItem(totalCount + 2, 100_000) }
     }
 
@@ -243,13 +243,14 @@ fun ChatScreen(
                         item(key = "live") {
                             when {
                                 live.streamingText.isNotEmpty() -> AssistantBlock(live.streamingText, showAvatar = items.lastOrNull() is ChatItem.User, streaming = true)
-                                live.approval != null -> Spacer(Modifier.height(1.dp))
+                                live.approval != null || live.question != null -> Spacer(Modifier.height(1.dp))
                                 live.activeTool != null -> LiveStatus(live.activeTool!!)
                                 else -> LiveStatus(if (live.step <= 1) "Thinking…" else "Working… step ${live.step}")
                             }
                         }
                     }
                     live.approval?.let { a -> item(key = "approval") { ApprovalCard(a, vm::answer) } }
+                    live.question?.let { q -> item(key = "question-${q.id}") { QuestionCard(q, vm::answerQuestion) } }
                     live.error?.let { e ->
                         item(key = "error") {
                             ErrorCard(e, onRetry = { vm.dismissError(); vm.retryLast() }, onDismiss = vm::dismissError,
